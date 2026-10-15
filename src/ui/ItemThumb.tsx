@@ -1,0 +1,37 @@
+import { getCategory } from '@/domain/categories';
+import { itemCoverPhotoId } from '@/domain/items';
+import type { Item } from '@/domain/types';
+import { PhotoImage } from './PhotoImage';
+
+/** Square image of an item: its cover photo, or a colour tile with the category icon. */
+/** Decorative by default (alt="") since it is almost always shown next to the item's name. */
+export function ItemThumb({
+  item,
+  className = '',
+  alt = '',
+}: {
+  item: Item;
+  className?: string;
+  alt?: string;
+}) {
+  const category = getCategory(item.categoryId);
+  const fallback = (
+    <div
+      className={`flex items-center justify-center text-3xl ${className}`}
+      style={{
+        background: `linear-gradient(135deg, ${item.colors.primary}, ${item.colors.secondary ?? item.colors.primary})`,
+      }}
+      aria-hidden
+    >
+      <span className="drop-shadow">{category?.icon}</span>
+    </div>
+  );
+  return (
+    <PhotoImage
+      photoId={itemCoverPhotoId(item)}
+      alt={alt}
+      className={`object-cover ${className}`}
+      fallback={fallback}
+    />
+  );
+}
