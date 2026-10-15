@@ -56,8 +56,10 @@ export function BottomGarment({ look, skeleton: s, fade, highlighted, onSelect }
       </TorsoShape>
 
       {(['L', 'R'] as const).map((side) => {
-        // Pants hang a little past the ankle so they cover the boot cuff.
-        const cuffEnd = s.ankle[side].clone().add(new Vector3(0, style.bell ? -0.02 : 0.02, 0));
+        // Measured along the shin so the layer stays centred on the (tilted) leg: pants hang a
+        // little past the ankle over the boot cuff, base layers stop just above it.
+        const shinDir = s.knee[side].clone().sub(s.ankle[side]).normalize();
+        const cuffEnd = s.ankle[side].clone().addScaledVector(shinDir, style.bell ? -0.02 : 0.02);
         return (
           <group key={side}>
             <Segment

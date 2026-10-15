@@ -45,11 +45,37 @@ function encode(bitmap: ImageBitmap, max: number, quality: number): Promise<Blob
   );
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      },
+    );
+  });
+}
+
 /**
  * Turns a camera/gallery file into the two stored sizes. Phone photos are 3–12 MB, so we never
  * store the original: a 1600px version is plenty for the detail view and the share card.
  */
-export async function processImageFile(file: Blob): Promise<NewPhoto> {
+export function processImageFile(file: Blob): Promise<NewPhoto> {
+  // Decoding/encoding runs off the main thread and can stall on an overloaded device; fail
+  // visibly instead of showing a spinner forever.
+  return withTimeout(
+    resizeAndEncode(file),
+    30_000,
+    'Processing the photo took too long. Please try again.',
+  );
+}
+
+async function resizeAndEncode(file: Blob): Promise<NewPhoto> {
   const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
   try {
     const [full, thumb] = await Promise.all([

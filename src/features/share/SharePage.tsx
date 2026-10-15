@@ -10,12 +10,17 @@ import { encodeOutfit, shareUrl } from '@/share/outfitLink';
 import { downloadBlob, shareLink } from '@/share/snapshot';
 import { Button } from '@/ui/Button';
 import { PageHeader } from '@/ui/PageHeader';
+import { InstallButton } from '@/ui/PwaPrompts';
 import { FlatRider } from '../outfits/FlatRider';
 
 export function SharePage() {
   return (
     <>
-      <PageHeader title="Share & backup" subtitle="Send your fits, keep your wardrobe safe" />
+      <PageHeader
+        title="Share & backup"
+        subtitle="Send your fits, keep your wardrobe safe"
+        actions={<InstallButton className="sm:hidden" />}
+      />
       <div className="space-y-8 px-4 pb-10 sm:px-6">
         <OutfitLinks />
         <Backup />

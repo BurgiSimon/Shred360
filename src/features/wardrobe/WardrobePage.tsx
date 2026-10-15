@@ -43,18 +43,37 @@ export function WardrobePage() {
       />
 
       {total === 0 ? (
-        <EmptyState
-          icon="🏔️"
-          title="Your locker is empty"
-          action={
-            <ButtonLink to="/wardrobe/new?category=shellJacket" variant="primary">
-              <PlusIcon className="size-4" /> Add your first jacket
-            </ButtonLink>
-          }
-        >
-          Snap a photo of a jacket, helmet, goggles or gloves you own. Shred360 picks up the colours
-          so your 3D rider can wear it.
-        </EmptyState>
+        <div className="space-y-4">
+          <EmptyState
+            icon="🏔️"
+            title="Your locker is empty"
+            action={
+              <ButtonLink to="/wardrobe/new?category=shellJacket" variant="primary">
+                <PlusIcon className="size-4" /> Add your first jacket
+              </ButtonLink>
+            }
+          >
+            Snap a photo of a jacket, helmet, goggles or gloves you own. Shred360 picks up the
+            colours so your 3D rider can wear it.
+          </EmptyState>
+          <ol className="mx-4 grid gap-3 sm:mx-6 sm:grid-cols-3">
+            {[
+              ['📸', 'Add your gear', 'Photos and colours of the real stuff you own.'],
+              ['🧩', 'Build outfits', 'Pick a helmet, goggles, jacket, pants and gloves.'],
+              ['🏂', 'Spin it in 3D', 'Peel the layers, then share a link, image or 360° clip.'],
+            ].map(([icon, title, text], i) => (
+              <li key={title} className="card flex gap-3 p-4">
+                <span className="text-2xl">{icon}</span>
+                <span>
+                  <span className="block text-sm font-bold text-white">
+                    {i + 1}. {title}
+                  </span>
+                  <span className="block text-xs text-ink-400">{text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
       ) : (
         <>
           <div className="space-y-3 px-4 sm:px-6">

@@ -29,6 +29,8 @@ describe('layoutLocker', () => {
     expect(Math.min(...xs) + Math.max(...xs)).toBeCloseTo(0, 5);
     expect(layout.zones.map((z) => z.zone)).toEqual(['head', 'tops']);
     expect(layout.zones[0].count).toBe(4);
+    expect(layout.zones[0].y).toBeCloseTo(LOCKER.rows[1]);
+    expect(layout.zones[1].y).toBeCloseTo(LOCKER.rows[0]);
   });
 
   it('keeps zones apart', () => {

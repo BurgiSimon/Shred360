@@ -40,7 +40,7 @@ export function PhotoStrip({
         added.push(await repo.addPhoto(await processImageFile(file)));
       } catch (e) {
         console.error(e);
-        setError(`Couldn't read ${file.name || 'that photo'}. Try a JPEG or PNG.`);
+        setError(`Couldn't process ${file.name || 'that photo'}. Try again, or use a JPEG or PNG.`);
       } finally {
         setBusy((n) => n - 1);
       }

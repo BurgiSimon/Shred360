@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { CubeIcon, HangerIcon, LayersIcon, ShareIcon } from './icons';
+import { InstallButton, PwaUpdateToast } from './PwaPrompts';
 
 const NAV = [
   { to: '/wardrobe', label: 'Wardrobe', Icon: HangerIcon },
@@ -17,6 +18,9 @@ export function AppLayout() {
       >
         <div className="hidden px-5 pt-6 pb-8 sm:block">
           <Brand />
+        </div>
+        <div className="absolute inset-x-3 bottom-6 hidden sm:block">
+          <InstallButton className="w-full" />
         </div>
         <ul className="flex justify-around sm:flex-col sm:gap-1 sm:px-3">
           {NAV.map(({ to, label, Icon }) => (
@@ -39,6 +43,7 @@ export function AppLayout() {
       <main className="flex min-w-0 flex-1 flex-col pb-24 sm:pb-8">
         <Outlet />
       </main>
+      <PwaUpdateToast />
     </div>
   );
 }

@@ -71,8 +71,9 @@ function Mannequin({ skeleton: s, showFace }: { skeleton: Skeleton; showFace: bo
             >
               {skin}
             </Segment>
+            {/* The hand starts just past the wrist so it doesn't intersect sleeve cuffs. */}
             <Segment
-              from={s.wrist[side]}
+              from={s.wrist[side].clone().lerp(s.handTip[side], 0.18)}
               to={s.handTip[side]}
               rFrom={BODY.r.hand}
               rTo={BODY.r.hand - 0.008}

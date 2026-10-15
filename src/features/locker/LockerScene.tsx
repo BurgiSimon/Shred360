@@ -121,7 +121,7 @@ function CameraRig({
 }: {
   layout: LockerLayout;
   focus?: { x: number; y: number };
-  zoneFocus?: { x: number; width: number };
+  zoneFocus?: { x: number; y: number; width: number };
 }) {
   const controls = useRef<CameraControlsImpl>(null);
   const { size, camera } = useThree();
@@ -145,7 +145,7 @@ function CameraRig({
       void c.setLookAt(focus.x, focus.y - 0.1, 1.7, focus.x, focus.y - 0.18, 0, true);
     } else if (zoneFocus) {
       const d = distanceForWidth(zoneFocus.width + 0.8, aspect, fov);
-      void c.setLookAt(zoneFocus.x, VIEW_Y + 0.2, d, zoneFocus.x, VIEW_Y, 0, true);
+      void c.setLookAt(zoneFocus.x, zoneFocus.y + 0.15, d, zoneFocus.x, zoneFocus.y, 0, true);
     } else {
       const d = distanceForWidth(layout.width, aspect, fov);
       void c.setLookAt(0, VIEW_Y + 0.25, d, 0, VIEW_Y, 0, true);
@@ -204,7 +204,10 @@ export function LockerScene({
     [selected],
   );
   const zone = layout.zones.find((z) => z.zone === zoneFocus);
-  const zoneTarget = useMemo(() => (zone ? { x: zone.x, width: zone.width } : undefined), [zone]);
+  const zoneTarget = useMemo(
+    () => (zone ? { x: zone.x, y: zone.y, width: zone.width } : undefined),
+    [zone],
+  );
 
   return (
     <Canvas

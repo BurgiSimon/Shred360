@@ -23,6 +23,8 @@ export interface ZoneSlot {
   label: string;
   /** Centre of the zone. */
   x: number;
+  /** Vertical centre of the rows the zone actually uses. */
+  y: number;
   width: number;
   count: number;
 }
@@ -48,10 +50,12 @@ export function layoutLocker(
     if (group.items.length === 0) continue;
     const columns = Math.ceil(group.items.length / rows);
     const width = columns * LOCKER.columnSpacing;
+    const usedRows = LOCKER.rows.slice(0, Math.min(rows, group.items.length));
     const zone: ZoneSlot = {
       zone: group.zone,
       label: group.label,
       x: cursor + width / 2,
+      y: usedRows.reduce((sum, r) => sum + r, 0) / usedRows.length,
       width,
       count: group.items.length,
     };
