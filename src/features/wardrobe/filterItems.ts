@@ -1,4 +1,10 @@
-import { CATEGORIES, getCategory, type CategoryGroup } from '@/domain/categories';
+import {
+  CATEGORIES,
+  getCategory,
+  LOCKER_ZONES,
+  type CategoryGroup,
+  type LockerZone,
+} from '@/domain/categories';
 import { itemDisplayName } from '@/domain/items';
 import type { Item } from '@/domain/types';
 import { colorName } from '@/lib/color';
@@ -43,10 +49,20 @@ export function filterItems(items: Item[], filter: ItemFilter): Item[] {
   });
 }
 
-/** Items grouped by category, in registry order, skipping empty categories. */
-export function groupByCategory(items: Item[]): { categoryId: string; items: Item[] }[] {
-  return CATEGORIES.map((c) => ({
-    categoryId: c.id as string,
-    items: items.filter((i) => i.categoryId === c.id),
+const CATEGORY_ORDER = new Map<string, number>(CATEGORIES.map((c, i) => [c.id, i]));
+
+/**
+ * Items grouped by body zone (head, tops, hands, bottoms), skipping empty zones. Within a zone,
+ * items are ordered by category so all jackets sit together.
+ */
+export function groupByZone(items: Item[]): { zone: LockerZone; label: string; items: Item[] }[] {
+  return LOCKER_ZONES.map(({ id, label }) => ({
+    zone: id,
+    label,
+    items: items
+      .filter((i) => getCategory(i.categoryId)?.zone === id)
+      .sort(
+        (a, b) => (CATEGORY_ORDER.get(a.categoryId) ?? 0) - (CATEGORY_ORDER.get(b.categoryId) ?? 0),
+      ),
   })).filter((g) => g.items.length > 0);
 }

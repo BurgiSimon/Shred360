@@ -127,7 +127,13 @@ export function ItemDetailPage() {
 
 function Gallery({ item }: { item: Item }) {
   if (item.photoIds.length === 0) {
-    return <ItemThumb item={item} className="aspect-square w-full rounded-2xl" />;
+    return (
+      <ItemThumb
+        item={item}
+        alt={itemDisplayName(item)}
+        className="aspect-square w-full rounded-2xl"
+      />
+    );
   }
   const ordered = item.coverPhotoId
     ? [item.coverPhotoId, ...item.photoIds.filter((p) => p !== item.coverPhotoId)]

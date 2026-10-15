@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createItem } from '@/domain/items';
-import { DEFAULT_FILTER, filterItems, groupByCategory } from './filterItems';
+import { DEFAULT_FILTER, filterItems, groupByZone } from './filterItems';
 
 const jacket = createItem('shellJacket', {
   brand: 'Burton',
@@ -36,10 +36,11 @@ describe('filterItems', () => {
     expect(filterItems(items, { ...DEFAULT_FILTER, group: 'clothing' })).toEqual([jacket]);
   });
 
-  it('groups by category in registry order', () => {
-    expect(groupByCategory([helmet, jacket]).map((g) => g.categoryId)).toEqual([
-      'shellJacket',
-      'helmet',
-    ]);
+  it('groups by zone in head → tops → hands → bottoms order', () => {
+    const pants = createItem('pants', { brand: 'X' });
+    const base = createItem('baseTop', { brand: 'Y' });
+    const groups = groupByZone([pants, base, helmet, jacket, oldGloves]);
+    expect(groups.map((g) => g.zone)).toEqual(['head', 'tops', 'hands', 'bottoms']);
+    expect(groups[1].items).toEqual([jacket, base]);
   });
 });

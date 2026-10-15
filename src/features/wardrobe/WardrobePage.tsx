@@ -12,7 +12,7 @@ import { PlusIcon, SearchIcon } from '@/ui/icons';
 import { ItemThumb } from '@/ui/ItemThumb';
 import { PageHeader } from '@/ui/PageHeader';
 import { RouteFallback } from '@/ui/RouteFallback';
-import { DEFAULT_FILTER, filterItems, groupByCategory, type ItemFilter } from './filterItems';
+import { DEFAULT_FILTER, filterItems, groupByZone, type ItemFilter } from './filterItems';
 
 const GROUP_FILTERS: (CategoryGroup | 'all')[] = ['all', 'clothing', 'head', 'hands'];
 
@@ -20,7 +20,7 @@ export function WardrobePage() {
   const { data: items, loading } = useItems();
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_FILTER);
   const visible = useMemo(() => filterItems(items ?? [], filter), [items, filter]);
-  const groups = useMemo(() => groupByCategory(visible), [visible]);
+  const groups = useMemo(() => groupByZone(visible), [visible]);
 
   if (loading) return <RouteFallback />;
 
@@ -92,28 +92,24 @@ export function WardrobePage() {
             <p className="px-6 py-10 text-center text-ink-400">Nothing matches that search.</p>
           ) : (
             <div className="mt-4 space-y-6 px-4 sm:px-6">
-              {groups.map(({ categoryId, items: groupItems }) => {
-                const category = getCategory(categoryId);
-                return (
-                  <section key={categoryId} aria-labelledby={`cat-${categoryId}`}>
-                    <h2
-                      id={`cat-${categoryId}`}
-                      className="mb-2 flex items-center gap-2 text-sm font-bold text-white"
-                    >
-                      <span>{category?.icon}</span>
-                      {category?.label}
-                      <span className="font-medium text-ink-400">{groupItems.length}</span>
-                    </h2>
-                    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                      {groupItems.map((item) => (
-                        <li key={item.id}>
-                          <ItemCard item={item} />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                );
-              })}
+              {groups.map(({ zone, label, items: groupItems }) => (
+                <section key={zone} aria-labelledby={`zone-${zone}`}>
+                  <h2
+                    id={`zone-${zone}`}
+                    className="mb-2 flex items-center gap-2 text-sm font-bold text-white"
+                  >
+                    {label}
+                    <span className="font-medium text-ink-400">{groupItems.length}</span>
+                  </h2>
+                  <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                    {groupItems.map((item) => (
+                      <li key={item.id}>
+                        <ItemCard item={item} />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
             </div>
           )}
         </>
@@ -143,7 +139,7 @@ function ItemCard({ item }: { item: Item }) {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-white">{itemDisplayName(item)}</p>
           <p className="truncate text-xs text-ink-400">
-            {[item.brand, item.size].filter(Boolean).join(' · ') || '—'}
+            {[getCategory(item.categoryId)?.label, item.size].filter(Boolean).join(' · ')}
           </p>
         </div>
         <ColorDots colors={item.colors} />

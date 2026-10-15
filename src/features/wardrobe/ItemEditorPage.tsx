@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useItem } from '@/data/hooks';
 import { getCategory, isCategoryId, type CategoryId } from '@/domain/categories';
 import { createItem, itemDisplayName } from '@/domain/items';
@@ -9,22 +9,37 @@ import { RouteFallback } from '@/ui/RouteFallback';
 import { CategoryPicker } from './CategoryPicker';
 import { ItemForm } from './ItemForm';
 
+/**
+ * Form pages are keyed by the location so every navigation starts from a fresh draft. Without
+ * this, React Router's transition-wrapped navigations can skip committing the page in between
+ * (e.g. new → detail → new) and the old draft, including its id, would be reused.
+ */
 export function NewItemPage() {
+  const location = useLocation();
+  // Hash navigations made outside the router all share the key "default", so add the search too.
+  return <NewItemFlow key={`${location.key}${location.search}`} />;
+}
+
+export function EditItemPage() {
+  const location = useLocation();
+  return <EditItemFlow key={`${location.key}${location.pathname}`} />;
+}
+
+function NewItemFlow() {
   const navigate = useNavigate();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const fromQuery = params.get('category');
-  const [categoryId, setCategoryId] = useState<CategoryId | undefined>(
-    isCategoryId(fromQuery) ? fromQuery : undefined,
-  );
-  // Created once per chosen category so the draft id stays stable while editing.
-  const initial = useMemo(() => (categoryId ? createItem(categoryId) : undefined), [categoryId]);
+  const categoryId: CategoryId | undefined = isCategoryId(fromQuery) ? fromQuery : undefined;
+  // Created once per mount so the draft id stays stable while editing, and replaced right after a
+  // save so this page can never write a second item over the one it just created.
+  const [initial, setInitial] = useState(() => (categoryId ? createItem(categoryId) : undefined));
 
   if (!initial) {
     return (
       <>
         <PageHeader title="Add gear" subtitle="What are you adding?" back="/wardrobe" />
         <div className="px-4 sm:px-6">
-          <CategoryPicker onPick={setCategoryId} />
+          <CategoryPicker onPick={(id) => setParams({ category: id })} />
         </div>
       </>
     );
@@ -38,14 +53,17 @@ export function NewItemPage() {
         key={initial.id}
         initial={initial}
         isNew
-        onSaved={(item) => navigate(`/wardrobe/${item.id}`, { replace: true })}
+        onSaved={(item) => {
+          setInitial(createItem(item.categoryId));
+          navigate(`/wardrobe/${item.id}`, { replace: true });
+        }}
         onCancel={() => navigate('/wardrobe')}
       />
     </>
   );
 }
 
-export function EditItemPage() {
+function EditItemFlow() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: item, loading } = useItem(id);

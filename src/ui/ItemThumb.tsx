@@ -1,10 +1,19 @@
 import { getCategory } from '@/domain/categories';
-import { itemCoverPhotoId, itemDisplayName } from '@/domain/items';
+import { itemCoverPhotoId } from '@/domain/items';
 import type { Item } from '@/domain/types';
 import { PhotoImage } from './PhotoImage';
 
 /** Square image of an item: its cover photo, or a colour tile with the category icon. */
-export function ItemThumb({ item, className = '' }: { item: Item; className?: string }) {
+/** Decorative by default (alt="") since it is almost always shown next to the item's name. */
+export function ItemThumb({
+  item,
+  className = '',
+  alt = '',
+}: {
+  item: Item;
+  className?: string;
+  alt?: string;
+}) {
   const category = getCategory(item.categoryId);
   const fallback = (
     <div
@@ -20,7 +29,7 @@ export function ItemThumb({ item, className = '' }: { item: Item; className?: st
   return (
     <PhotoImage
       photoId={itemCoverPhotoId(item)}
-      alt={itemDisplayName(item)}
+      alt={alt}
       className={`object-cover ${className}`}
       fallback={fallback}
     />
