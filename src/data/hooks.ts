@@ -107,3 +107,35 @@ export function usePhotoUrl(
 
   return entry?.key === key ? entry.url : undefined;
 }
+
+/** Object URLs for several photos at once (thumb size), keyed by photo id. */
+export function usePhotoUrls(photoIds: string[]): Record<string, string> {
+  const repo = useRepository();
+  const key = photoIds.join(',');
+  const [entry, setEntry] = useState<{ key: string; urls: Record<string, string> }>();
+
+  useEffect(() => {
+    const ids = key ? key.split(',') : [];
+    let cancelled = false;
+    const created: string[] = [];
+    Promise.all(ids.map((id) => repo.getPhoto(id))).then((photos) => {
+      if (cancelled) return;
+      const urls: Record<string, string> = {};
+      photos.forEach((photo, i) => {
+        if (!photo) return;
+        const url = URL.createObjectURL(photo.thumb);
+        created.push(url);
+        urls[ids[i]] = url;
+      });
+      setEntry({ key, urls });
+    });
+    return () => {
+      cancelled = true;
+      created.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [repo, key]);
+
+  return entry?.key === key ? entry.urls : EMPTY_URLS;
+}
+
+const EMPTY_URLS: Record<string, string> = {};
