@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useItems, usePhotoUrls } from '@/data/hooks';
 import { getCategory, type LockerZone } from '@/domain/categories';
@@ -8,10 +8,11 @@ import { ButtonLink } from '@/ui/Button';
 import { Chip } from '@/ui/Chip';
 import { ColorDots } from '@/ui/ColorDots';
 import { EmptyState } from '@/ui/EmptyState';
-import { LayersIcon } from '@/ui/icons';
+import { LayersIcon, ShareIcon } from '@/ui/icons';
 import { ItemThumb } from '@/ui/ItemThumb';
 import { PageHeader } from '@/ui/PageHeader';
 import { RouteFallback } from '@/ui/RouteFallback';
+import { SharePanel } from '../share/SharePanel';
 import { DEFAULT_FILTER, filterItems, groupByZone } from '../wardrobe/filterItems';
 import { layoutLocker } from './layout';
 import { LockerScene } from './LockerScene';
@@ -20,6 +21,8 @@ export default function LockerPage() {
   const { data: items, loading } = useItems();
   const [selected, setSelected] = useState<Item>();
   const [zone, setZone] = useState<LockerZone>();
+  const [sharing, setSharing] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const layout = useMemo(
     () => layoutLocker(groupByZone(filterItems(items ?? [], DEFAULT_FILTER))),
@@ -60,11 +63,25 @@ export default function LockerPage() {
         selectedId={selected?.id}
         onSelect={setSelected}
         zoneFocus={zone}
+        onCanvas={(canvas) => (canvasRef.current = canvas)}
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/60 to-transparent p-3 sm:p-5">
-        <h1 className="text-lg font-extrabold text-white drop-shadow sm:text-2xl">Locker</h1>
-        <p className="text-xs text-ink-200">Drag to browse · tap a card to look closer</p>
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-extrabold text-white drop-shadow sm:text-2xl">Locker</h1>
+            <p className="text-xs text-ink-200">Drag to browse · tap a card to look closer</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSharing(true)}
+            aria-label="Share locker snapshot"
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-xl bg-ink-900/70 px-3 py-2 text-sm font-semibold text-white backdrop-blur hover:bg-ink-700"
+          >
+            <ShareIcon className="size-4" />
+            <span className="hidden sm:inline">Snapshot</span>
+          </button>
+        </div>
         <div className="pointer-events-auto mt-2 -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0">
           <Chip
             active={!zone && !selected}
@@ -121,6 +138,16 @@ export default function LockerPage() {
             </div>
           </div>
         </div>
+      )}
+      {sharing && (
+        <SharePanel
+          caption={{
+            title: 'My gear wall',
+            subtitle: `${layout.cards.length} pieces of real gear`,
+          }}
+          getCanvas={() => canvasRef.current}
+          onClose={() => setSharing(false)}
+        />
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useItems, useOutfit, usePhotoUrls } from '@/data/hooks';
 import { getCategory } from '@/domain/categories';
@@ -10,14 +10,17 @@ import type { Discipline } from '@/domain/types';
 import { ButtonLink } from '@/ui/Button';
 import { ColorDots } from '@/ui/ColorDots';
 import { EmptyState } from '@/ui/EmptyState';
-import { EditIcon } from '@/ui/icons';
+import { EditIcon, ShareIcon } from '@/ui/icons';
 import { ItemThumb } from '@/ui/ItemThumb';
 import { PageHeader } from '@/ui/PageHeader';
 import { RouteFallback } from '@/ui/RouteFallback';
+import { encodeOutfit, shareUrl } from '@/share/outfitLink';
+import { SharePanel } from '../share/SharePanel';
 import { PhotoCards, type PhotoCard } from './PhotoCards';
 import { Rider } from './Rider';
 import { RiderStage } from './RiderStage';
 import { StageControls, StageTopBar } from './StageControls';
+import { TurntableDriver, type TurntableRun } from './TurntableDriver';
 
 export default function FitCheckPage() {
   const { id } = useParams();
@@ -28,6 +31,26 @@ export default function FitCheckPage() {
   const [autoRotate, setAutoRotate] = useState(true);
   const [showCards, setShowCards] = useState(true);
   const [selected, setSelected] = useState<OutfitSlot>();
+  const [sharing, setSharing] = useState(false);
+  const [turntable, setTurntable] = useState<TurntableRun | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const runTurntable = useCallback(
+    (seconds: number, onProgress?: (t: number) => void) =>
+      new Promise<void>((resolve) => {
+        setSelected(undefined);
+        setTurntable({
+          id: Date.now(),
+          seconds,
+          onProgress,
+          onDone: () => {
+            setTurntable(null);
+            resolve();
+          },
+        });
+      }),
+    [],
+  );
 
   const resolved = useMemo(
     () => (outfit && items ? resolveOutfit(outfit, items) : {}),
@@ -65,10 +88,16 @@ export default function FitCheckPage() {
 
   const activeDiscipline = discipline ?? outfit.discipline;
   const selectedItem = selected ? resolved[selected] : undefined;
+  const title = outfit.name || 'Untitled outfit';
 
   return (
     <div className="relative h-[calc(100dvh-4.75rem)] overflow-hidden bg-ink-900 sm:h-dvh">
-      <RiderStage autoRotate={autoRotate && !selected} onMissed={() => setSelected(undefined)}>
+      <RiderStage
+        autoRotate={autoRotate && !selected && !turntable}
+        onMissed={() => setSelected(undefined)}
+        onCanvas={(canvas) => (canvasRef.current = canvas)}
+      >
+        <TurntableDriver run={turntable} />
         <Rider
           look={look}
           discipline={activeDiscipline}
@@ -80,14 +109,29 @@ export default function FitCheckPage() {
       </RiderStage>
 
       <StageTopBar
-        title={outfit.name || 'Untitled outfit'}
+        title={title}
         back="/outfits"
         discipline={activeDiscipline}
         onDiscipline={setDiscipline}
         actions={
-          <ButtonLink to={`/outfits/${outfit.id}/edit`} aria-label="Edit outfit" className="!px-3">
-            <EditIcon className="size-4" />
-          </ButtonLink>
+          <>
+            <ButtonLink
+              to={`/outfits/${outfit.id}/edit`}
+              aria-label="Edit outfit"
+              className="!px-3"
+            >
+              <EditIcon className="size-4" />
+            </ButtonLink>
+            <button
+              type="button"
+              onClick={() => setSharing(true)}
+              aria-label="Share outfit"
+              className="inline-flex items-center gap-2 rounded-xl bg-ice px-3 py-2.5 text-sm font-semibold text-ink-950 shadow-[0_0_24px_-6px] shadow-ice/60 hover:bg-white"
+            >
+              <ShareIcon className="size-4" />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+          </>
         }
       />
 
@@ -127,6 +171,29 @@ export default function FitCheckPage() {
           onShowCards={cards.length ? setShowCards : undefined}
         />
       </div>
+      {sharing && (
+        <SharePanel
+          caption={{
+            title,
+            subtitle: Object.values(look)
+              .map((g) => g?.brand)
+              .filter((b, i, all): b is string => Boolean(b) && all.indexOf(b) === i)
+              .slice(0, 4)
+              .join(' · '),
+          }}
+          getCanvas={() => canvasRef.current}
+          link={shareUrl(
+            encodeOutfit({
+              name: title,
+              discipline: activeDiscipline,
+              conditions: outfit.conditions,
+              look,
+            }),
+          )}
+          onTurntable={runTurntable}
+          onClose={() => setSharing(false)}
+        />
+      )}
     </div>
   );
 }
